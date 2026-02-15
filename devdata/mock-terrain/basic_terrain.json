@@ -1,0 +1,105 @@
+{
+  "terrain": [
+    {
+      "id": "terrain_forest_01",
+      "name": "Dense Forest",
+      "type": "forest",
+      "footprint": {
+        "width": 12,
+        "depth": 8,
+        "height": 6
+      },
+      "polygon": [
+        { "x": 12, "y": 6 },
+        { "x": 24, "y": 6 },
+        { "x": 24, "y": 14 },
+        { "x": 12, "y": 14 }
+      ],
+      "properties": {
+        "blocks_los": true,
+        "provides_cover": true,
+        "provides_dense_cover": false,
+        "passable": true,
+        "difficult_terrain": true
+      },
+      "rules": [
+        {
+          "name": "Dense",
+          "description": "Units in this terrain gain +1 to their save rolls"
+        },
+        {
+          "name": "Difficult Terrain",
+          "description": "Moving units halve their movement through this terrain"
+        }
+      ]
+    },
+    {
+      "id": "terrain_ruin_01",
+      "name": "Gothic Ruin",
+      "type": "ruin",
+      "footprint": {
+        "width": 10,
+        "depth": 10,
+        "height": 8
+      },
+      "polygon": [
+        { "x": 0, "y": 18 },
+        { "x": 10, "y": 18 },
+        { "x": 10, "y": 28 },
+        { "x": 0, "y": 28 }
+      ],
+      "properties": {
+        "blocks_los": true,
+        "provides_cover": true,
+        "provides_dense_cover": true,
+        "passable": true,
+        "difficult_terrain": false,
+        "climbable": true
+      },
+      "rules": [
+        {
+          "name": "Dense Cover",
+          "description": "Units in this terrain gain +1 to their save rolls and ignore rend"
+        },
+        {
+          "name": "Climbable",
+          "description": "Infantry units may climb onto the ruin for a move action"
+        }
+      ]
+    },
+    {
+      "id": "terrain_water_01",
+      "name": "River Crossing",
+      "type": "river",
+      "footprint": {
+        "width": 24,
+        "depth": 3,
+        "height": 0
+      },
+      "polygon": [
+        { "x": 30, "y": 0 },
+        { "x": 54, "y": 0 },
+        { "x": 54, "y": 3 },
+        { "x": 30, "y": 3 }
+      ],
+      "properties": {
+        "blocks_los": false,
+        "provides_cover": false,
+        "provides_dense_cover": false,
+        "passable": true,
+        "difficult_terrain": true,
+        "impassable_for": ["vehicles", "heavy_vehicles"]
+      },
+      "rules": [
+        {
+          "name": "Difficult Terrain",
+          "description": "Moving units halve their movement through this terrain"
+        },
+        {
+          "name": "Impassable for Vehicles",
+          "description": "Vehicles cannot move through this terrain"
+        }
+      ]
+    }
+  ]
+}

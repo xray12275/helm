@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  # ── PostgreSQL (Event Store) ──────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: helm
+      POSTGRES_USER: helm
+      POSTGRES_PASSWORD: helm_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helm"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── API Gateway (REST + WebSocket) ────────────────────────
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      DATABASE_URL: "postgresql://helm:helm_dev_password@postgres:5432/helm"
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/api-gateway/src:/app/services/api-gateway/src
+      - ./services/state-engine/src:/app/services/state-engine/src
+      - ./services/rules-engine/src:/app/services/rules-engine/src
+      - ./packages/shared-types/src:/app/packages/shared-types/src
+      - ./devdata:/app/devdata
+
+  # ── Dice Service ──────────────────────────────────────────
+  dice-service:
+    build:
+      context: .
+      dockerfile: services/dice-service/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+    volumes:
+      - ./services/dice-service/src:/app/services/dice-service/src
+      - ./packages/shared-types/src:/app/packages/shared-types/src
+
+  # ── Voice Service ─────────────────────────────────────────
+  voice-service:
+    build:
+      context: .
+      dockerfile: services/voice-service/Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: "3002"
+    volumes:
+      - ./services/voice-service/src:/app/services/voice-service/src
+      - ./packages/shared-types/src:/app/packages/shared-types/src
+
+  # ── Vision Service (Python) ───────────────────────────────
+  vision-service:
+    build:
+      context: services/vision-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: "3003"
+    volumes:
+      - ./services/vision-service/src:/app/src
+      - ./devdata:/app/devdata
+
+  # ── Web Console (Vite dev server) ─────────────────────────
+  web-console:
+    build:
+      context: apps/web-console
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: "http://localhost:3000"
+      VITE_WS_URL: "ws://localhost:3000/ws"
+    volumes:
+      - ./apps/web-console/src:/app/src
+    depends_on:
+      - api-gateway
+
+volumes:
+  pgdata:

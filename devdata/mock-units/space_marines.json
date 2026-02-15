@@ -1,0 +1,179 @@
+{
+  "units": [
+    {
+      "id": "unit_tactical_alpha",
+      "name": "Tactical Infantry Alpha",
+      "label": "A",
+      "type": "squad",
+      "faction": "Imperial Space Marines",
+      "points": 75,
+      "keywords": ["infantry", "tactical", "troops"],
+      "composition": {
+        "baseSize": "28mm",
+        "modelCount": 5
+      },
+      "stats": {
+        "movement": 6,
+        "toughness": 4,
+        "saves": {
+          "armor": 3,
+          "invulnerable": null
+        },
+        "wounds": 1,
+        "leadership": 8
+      },
+      "weapons": [
+        {
+          "id": "bolter",
+          "name": "Bolter",
+          "type": "ranged",
+          "range": 24,
+          "strength": 4,
+          "armorPiercing": 0,
+          "damage": 1
+        },
+        {
+          "id": "bolt_pistol",
+          "name": "Bolt Pistol",
+          "type": "ranged",
+          "range": 12,
+          "strength": 4,
+          "armorPiercing": 0,
+          "damage": 1
+        },
+        {
+          "id": "chainsword",
+          "name": "Chainsword",
+          "type": "melee",
+          "strength": 4,
+          "armorPiercing": -1,
+          "damage": 1
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Bolter Discipline",
+          "description": "If this unit has remained stationary, ranged weapons gain +1 to hit"
+        },
+        {
+          "name": "Imperium",
+          "description": "This unit gains +1 to hit against Chaos units"
+        }
+      ]
+    },
+    {
+      "id": "unit_heavy_support_bravo",
+      "name": "Heavy Support Vehicle Bravo",
+      "label": "B",
+      "type": "vehicle",
+      "faction": "Imperial Space Marines",
+      "points": 180,
+      "keywords": ["vehicle", "heavy_support", "transport"],
+      "composition": {
+        "baseSize": "50mm",
+        "modelCount": 1
+      },
+      "stats": {
+        "movement": 12,
+        "toughness": 7,
+        "saves": {
+          "armor": 2,
+          "invulnerable": null
+        },
+        "wounds": 14,
+        "leadership": 8
+      },
+      "weapons": [
+        {
+          "id": "heavy_bolter",
+          "name": "Heavy Bolter",
+          "type": "ranged",
+          "range": 36,
+          "strength": 5,
+          "armorPiercing": -1,
+          "damage": 2
+        },
+        {
+          "id": "storm_bolter",
+          "name": "Storm Bolter",
+          "type": "ranged",
+          "range": 24,
+          "strength": 4,
+          "armorPiercing": 0,
+          "damage": 1
+        },
+        {
+          "id": "coaxial_weapon",
+          "name": "Coaxial Weapon",
+          "type": "ranged",
+          "range": 24,
+          "strength": 4,
+          "armorPiercing": 0,
+          "damage": 1
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Heavy Armor",
+          "description": "This unit has +1 to its armor save"
+        },
+        {
+          "name": "Transport",
+          "description": "This vehicle can carry up to 12 infantry models"
+        }
+      ]
+    },
+    {
+      "id": "unit_character_chaplain",
+      "name": "Chaplain",
+      "label": "C",
+      "type": "character",
+      "faction": "Imperial Space Marines",
+      "points": 90,
+      "keywords": ["character", "infantry", "leader"],
+      "composition": {
+        "baseSize": "32mm",
+        "modelCount": 1
+      },
+      "stats": {
+        "movement": 6,
+        "toughness": 4,
+        "saves": {
+          "armor": 2,
+          "invulnerable": 4
+        },
+        "wounds": 5,
+        "leadership": 9
+      },
+      "weapons": [
+        {
+          "id": "crozius_arcanum",
+          "name": "Crozius Arcanum",
+          "type": "melee",
+          "strength": 5,
+          "armorPiercing": -1,
+          "damage": 2
+        },
+        {
+          "id": "plasma_pistol",
+          "name": "Plasma Pistol",
+          "type": "ranged",
+          "range": 12,
+          "strength": 7,
+          "armorPiercing": -3,
+          "damage": 1
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Litany of Faith",
+          "description": "Once per battle round, grant a friendly unit within 6 inches +1 to saves"
+        },
+        {
+          "name": "Rites of Battle",
+          "description": "Re-roll failed hits for friendly <faction> units within 6 inches"
+        }
+      ]
+    }
+  ]
+}

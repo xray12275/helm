@@ -1,0 +1,114 @@
+{
+  "rules": [
+    {
+      "id": "movement_distance_limit",
+      "name": "Movement Distance Limit",
+      "category": "movement",
+      "phase": "movement",
+      "conditions": [
+        {
+          "field": "unit.status.hasMoved",
+          "operator": "eq",
+          "value": false
+        },
+        {
+          "field": "distance",
+          "operator": "gte",
+          "value": 1
+        }
+      ],
+      "isLegal": true,
+      "explanation": "A unit may move up to its Movement (M) value in inches during the movement phase. This check validates that the distance is at least 1 inch (unit moved at all).",
+      "suggestedFix": "Ensure the target position is between 0 and M inches away.",
+      "source": "core_rules_2024"
+    },
+    {
+      "id": "movement_engagement_range_block",
+      "name": "Cannot Move from Engagement Range",
+      "category": "movement",
+      "phase": "movement",
+      "conditions": [
+        {
+          "field": "unit.status.inEngagement",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "field": "unit.lastActionType",
+          "operator": "eq",
+          "value": "normal_move"
+        }
+      ],
+      "isLegal": false,
+      "explanation": "A unit locked in engagement range cannot make normal moves. Units in engagement must either stay in place or attempt to fall back.",
+      "suggestedFix": "Choose a different unit to move, or attempt a Fall Back action instead.",
+      "source": "core_rules_2024"
+    },
+    {
+      "id": "movement_coherency_maintenance",
+      "name": "Maintain Unit Coherency",
+      "category": "movement",
+      "phase": "movement",
+      "conditions": [
+        {
+          "field": "unit.type",
+          "operator": "eq",
+          "value": "squad"
+        },
+        {
+          "field": "distance",
+          "operator": "lte",
+          "value": 2
+        }
+      ],
+      "isLegal": true,
+      "explanation": "After moving, squad members must maintain coherency (be within 2 inches of at least one other squad member). This rule checks that the move maintains coherency.",
+      "suggestedFix": "Reposition models to ensure all are within 2 inches of the unit.",
+      "source": "core_rules_2024"
+    },
+    {
+      "id": "movement_fall_back_distance",
+      "name": "Fall Back Movement Distance",
+      "category": "movement",
+      "phase": "movement",
+      "conditions": [
+        {
+          "field": "unit.lastActionType",
+          "operator": "eq",
+          "value": "fall_back"
+        },
+        {
+          "field": "distance",
+          "operator": "lte",
+          "value": 6
+        }
+      ],
+      "isLegal": true,
+      "explanation": "A unit that falls back moves up to 6 inches away from enemy units.",
+      "suggestedFix": "Ensure the fall back move is not more than 6 inches.",
+      "source": "core_rules_2024"
+    },
+    {
+      "id": "movement_advance_distance",
+      "name": "Advance Movement Distance",
+      "category": "movement",
+      "phase": "movement",
+      "conditions": [
+        {
+          "field": "unit.lastActionType",
+          "operator": "eq",
+          "value": "advance"
+        },
+        {
+          "field": "distance",
+          "operator": "lte",
+          "value": 10
+        }
+      ],
+      "isLegal": true,
+      "explanation": "A unit that advances moves up to 10 inches but cannot charge this turn.",
+      "suggestedFix": "Ensure the advance move does not exceed 10 inches.",
+      "source": "core_rules_2024"
+    }
+  ]
+}

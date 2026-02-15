@@ -1,0 +1,32 @@
+{
+  "name": "helm-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Helm — AI voice-first game guide/referee for Warhammer 40,000",
+  "workspaces": [
+    "packages/shared-types",
+    "services/state-engine",
+    "services/rules-engine",
+    "services/api-gateway",
+    "services/dice-service",
+    "services/voice-service",
+    "apps/web-console"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,dice,voice,web -c blue,green,magenta,cyan \"npm run dev:api\" \"npm run dev:dice\" \"npm run dev:voice\" \"npm run dev:web\"",
+    "dev:api": "cd services/api-gateway && npx tsx src/index.ts",
+    "dev:dice": "cd services/dice-service && npx tsx src/index.ts",
+    "dev:voice": "cd services/voice-service && npx tsx src/index.ts",
+    "dev:vision": "cd services/vision-service && uvicorn src.main:app --reload --port 3003",
+    "dev:web": "cd apps/web-console && npx vite",
+    "install:all": "npm install && cd packages/shared-types && npm install && cd ../../services/api-gateway && npm install && cd ../state-engine && npm install && cd ../rules-engine && npm install && cd ../dice-service && npm install && cd ../voice-service && npm install && cd ../../apps/web-console && npm install",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "docker:reset": "docker-compose down -v && docker-compose up --build",
+    "db:init": "psql postgresql://helm:helm_dev_password@localhost:5432/helm -f scripts/init-db.sql",
+    "typecheck": "cd packages/shared-types && npx tsc --noEmit && cd ../../services/state-engine && npx tsc --noEmit && cd ../rules-engine && npx tsc --noEmit"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
