@@ -348,7 +348,7 @@ export const DEFAULT_RULES: RuleDefinition[] = [
     ],
     isLegal: true,
     explanation:
-      'After suffering casualties, a unit must take a morale test. Roll 1D6 and add the number of casualties. If the result exceeds the unit's Leadership, models flee.',
+      "After suffering casualties, a unit must take a morale test. Roll 1D6 and add the number of casualties. If the result exceeds the unit's Leadership, models flee.",
     suggestedFix: 'Roll the morale test; if failed, remove additional models.',
     source: 'core_rules_2024',
   },

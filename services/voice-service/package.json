@@ -2,8 +2,7 @@
   "name": "@helm/voice-service",
   "version": "1.0.0",
   "description": "Voice command parsing and synthesis service",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
@@ -13,7 +12,7 @@
     "express": "^4.18.2",
     "zod": "^3.22.4",
     "uuid": "^9.0.1",
-    "@helm/shared-types": "workspace:*"
+    "@helm/shared-types": "*"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

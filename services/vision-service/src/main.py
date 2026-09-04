@@ -12,7 +12,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from PIL import Image
 import uvicorn
 
-from models import (
+from .models import (
     DetectedUnit,
     UnitIdentification,
     CalibrationResult,
@@ -20,7 +20,7 @@ from models import (
     HealthResponse,
     BoundingBox
 )
-from pipeline import (
+from .pipeline import (
     BaseDetector,
     UnitClassifier,
     RosterMatcher,

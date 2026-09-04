@@ -2,8 +2,7 @@
   "name": "@helm/api-gateway",
   "version": "1.0.0",
   "description": "REST and WebSocket API for Warhammer 40K referee app",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
@@ -15,8 +14,8 @@
     "uuid": "^9.0.1",
     "cors": "^2.8.5",
     "zod": "^3.22.4",
-    "@helm/shared-types": "workspace:*",
-    "@helm/rules-engine": "workspace:*"
+    "@helm/shared-types": "*",
+    "@helm/rules-engine": "*"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

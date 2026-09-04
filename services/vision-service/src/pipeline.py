@@ -6,7 +6,7 @@ import uuid
 import numpy as np
 from typing import List, Tuple, Optional
 from PIL import Image
-from models import DetectedUnit, BoundingBox, UnitIdentification, CalibrationResult, TerrainFootprint
+from .models import DetectedUnit, BoundingBox, UnitIdentification, CalibrationResult, TerrainFootprint
 
 
 class BaseDetector:

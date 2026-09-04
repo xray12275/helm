@@ -2,7 +2,7 @@
   "name": "@helm/state-engine",
   "version": "1.0.0",
   "description": "Event-sourced state engine for Helm Warhammer 40K referee app",
-  "main": "dist/index.js",
+  "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
@@ -10,8 +10,8 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@helm/shared-types": "workspace:*",
-    "dotenv": "^21.0.0",
+    "@helm/shared-types": "*",
+    "dotenv": "^16.4.5",
     "pg": "^8.11.3",
     "uuid": "^9.0.1",
     "ws": "^8.16.0",
