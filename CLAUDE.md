@@ -27,6 +27,7 @@ Written for Opus 5 / Fable 5.1 defaults. Thinking is on by default — don't ask
 - **Tests exist since 2026-09-04** — 68 of them across six workspaces, `npm test` at the root. Before that every service's `npm test` ran the Node test runner over nothing and reported `fail 0`. See *Testing* below; the web console still has none.
 - **20 default rules load, not "30+".** `GET /api/rules` returns `count: 20`.
 - `docs/` (10 files, ~6,000 lines) is the product spec and a 22-week, 8-engineer MVP plan. Useful for domain vocabulary and the intended event/command model; not a description of what exists.
+- **`docs/ONE_SHOT_BRIEF.md` is the build plan for the playable prototype** (written 2026-09-04 against HEAD `26f9cb3`): backend gaps, demo fixtures, the "Contour Sheet" design system, screens, gates and commit order. A session asked to "build the demo" or "finish Helm" executes that file; do not redesign what it has already decided.
 
 Commit `fff1d3c` (2026-09-04) is what makes the repo install and run at all: `workspace:*` deps changed to `*` (npm does not understand the `workspace:` protocol), each package's `main` pointed at `src/index.ts` so `tsx` resolves cross-workspace imports from source, `dotenv` re-pinned to a real version, and the vision service switched to relative imports with an `__init__.py`. Don't revert any of it — the earlier docs and Dockerfile comments that mention `workspace:*` predate it.
 
