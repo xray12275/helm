@@ -28,7 +28,7 @@ Written for Opus 5 / Fable 5.1 defaults. Thinking is on by default — don't ask
 - **20 default rules load, not "30+".** `GET /api/rules` returns `count: 20`.
 - `docs/` (10 files, ~6,000 lines) is the product spec and a 22-week, 8-engineer MVP plan. Useful for domain vocabulary and the intended event/command model; not a description of what exists.
 
-The repo has **one commit**. Uncommitted local edits (as of 2026-09-04) are what make it install and run at all: `workspace:*` deps changed to `*` (npm does not understand the `workspace:` protocol), each package's `main` pointed at `src/index.ts` so `tsx` resolves cross-workspace imports from source, `dotenv` re-pinned to a real version, and the vision service switched to relative imports with an `__init__.py`. Don't revert those; commit them.
+Commit `fff1d3c` (2026-09-04) is what makes the repo install and run at all: `workspace:*` deps changed to `*` (npm does not understand the `workspace:` protocol), each package's `main` pointed at `src/index.ts` so `tsx` resolves cross-workspace imports from source, `dotenv` re-pinned to a real version, and the vision service switched to relative imports with an `__init__.py`. Don't revert any of it — the earlier docs and Dockerfile comments that mention `workspace:*` predate it.
 
 ## Environments — read before running anything
 
