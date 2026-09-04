@@ -2,7 +2,7 @@
   "name": "helm-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "Helm — AI voice-first game guide/referee for Warhammer 40,000",
+  "description": "Helm \u2014 AI voice-first game guide/referee for Warhammer 40,000",
   "workspaces": [
     "packages/shared-types",
     "services/state-engine",
@@ -24,7 +24,7 @@
     "docker:down": "docker-compose down",
     "docker:reset": "docker-compose down -v && docker-compose up --build",
     "db:init": "psql postgresql://helm:helm_dev_password@localhost:5432/helm -f scripts/init-db.sql",
-    "typecheck": "cd packages/shared-types && npx tsc --noEmit && cd ../../services/state-engine && npx tsc --noEmit && cd ../rules-engine && npx tsc --noEmit"
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"

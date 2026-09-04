@@ -5,7 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
  * Type-safe extension of Express Request for our app
  */
 export interface AppRequest extends Request {
-  requestId: string;
+  // All optional: Express hands us a plain Request, and a handler typed with a
+  // required extra field is not assignable to RequestHandler (TS2769).
+  requestId?: string;
   userId?: string;
   matchId?: string;
 }

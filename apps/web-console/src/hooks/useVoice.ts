@@ -1,19 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList
-  isFinal: boolean
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string
-}
-
-declare global {
-  interface Window {
-    webkitSpeechRecognition: typeof SpeechRecognition
-  }
-}
+// Web Speech API types (SpeechRecognition, SpeechRecognitionEvent, window.webkitSpeechRecognition)
+// come from @types/dom-speech-recognition, loaded automatically from devDependencies.
 
 export interface UseVoiceReturn {
   startListening(): void

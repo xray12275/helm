@@ -45,12 +45,13 @@ export class RulesEngine {
     const context = buildRuleContext(state, command);
 
     // Get applicable rules for the current phase
-    const applicableRules = this.getApplicableRules(state.currentPhase);
+    const applicableRules = this.getApplicableRules(state.phase);
 
     // Track violations
     const violations: string[] = [];
     const blockedByRules: string[] = [];
     const allowedByRules: string[] = [];
+    const blockingRules: RuleDefinition[] = [];
 
     // Check each applicable rule
     for (const rule of applicableRules) {
@@ -66,6 +67,7 @@ export class RulesEngine {
       } else {
         // This rule blocks the action
         blockedByRules.push(rule.id);
+        blockingRules.push(rule);
         violations.push(
           `${rule.name}: ${rule.explanation} (${rule.suggestedFix})`
         );
@@ -75,9 +77,12 @@ export class RulesEngine {
     // Determine overall legality
     const isLegal = blockedByRules.length === 0;
 
+    const firstBlock = blockingRules[0];
     const result: LegalityResult = {
       id: uuidv4(),
       isLegal,
+      ruleId: firstBlock?.id ?? null,
+      suggestedFix: firstBlock?.suggestedFix ?? null,
       matchId: state.id,
       commandId: (command as any).id || uuidv4(),
       timestamp: new Date().toISOString(),

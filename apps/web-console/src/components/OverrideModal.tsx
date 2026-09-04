@@ -13,6 +13,8 @@ export const OverrideModal: React.FC = () => {
   }
 
   const event = overrideModal.event
+  // event.data is untyped JSON from the gateway; narrow once for rendering.
+  const data = (event.data ?? {}) as Record<string, string | undefined>
 
   const handleAccept = () => {
     hideOverride()
@@ -43,7 +45,7 @@ export const OverrideModal: React.FC = () => {
 
         <div className="bg-gray-900 border border-imperial-red/50 rounded p-4 mb-4">
           <p className="text-sm text-gray-300 mb-3">
-            {event.data.description ||
+            {data.description ||
               'An action was attempted that violates game rules.'}
           </p>
 
@@ -51,24 +53,24 @@ export const OverrideModal: React.FC = () => {
             <div>
               <span className="text-gray-500">Rule Violated:</span>
               <div className="text-imperial-red font-bold mt-1">
-                {event.data.rule || 'Unknown Rule'}
+                {data.rule || 'Unknown Rule'}
               </div>
             </div>
 
-            {event.data.details && (
+            {data.details && (
               <div>
                 <span className="text-gray-500">Details:</span>
                 <div className="text-gray-300 mt-1 bg-black/30 p-2 rounded">
-                  {event.data.details}
+                  {data.details}
                 </div>
               </div>
             )}
 
-            {event.data.suggestion && (
+            {data.suggestion && (
               <div>
                 <span className="text-gray-500">Suggested Fix:</span>
                 <div className="text-cyan-300 mt-1 bg-cyan-900/20 p-2 rounded">
-                  {event.data.suggestion}
+                  {data.suggestion}
                 </div>
               </div>
             )}

@@ -115,7 +115,7 @@ export const ArmySchema = z.object({
   detachment: z.string(),
   units: z.array(UnitSchema),
   enhancements: z.array(EnhancementSchema),
-  totalPoints: z.number().int().positive(),
+  totalPoints: z.number().int().nonnegative(), // 0 until an army is submitted
 });
 
 export type Army = z.infer<typeof ArmySchema>;

@@ -51,6 +51,14 @@ export const LegalityResultSchema = z.object({
   ruleId: z.string().nullable(),
   explanation: z.string(),
   suggestedFix: z.string().nullable(),
+  // Audit fields — populated by @helm/rules-engine, referenced by overrides.
+  id: z.string().uuid().optional(),
+  matchId: z.string().optional(),
+  commandId: z.string().optional(),
+  timestamp: z.string().datetime().optional(),
+  appliedRules: z.array(z.string()).optional(),
+  violations: z.array(z.string()).optional(),
+  blockedByRuleIds: z.array(z.string()).optional(),
 });
 
 export type LegalityResult = z.infer<typeof LegalityResultSchema>;

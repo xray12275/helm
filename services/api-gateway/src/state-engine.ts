@@ -1,5 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
-import { MatchState, MatchCommand, MatchEvent, Unit, Phase, Player } from '@helm/shared-types';
+import {
+  MatchState,
+  MatchCommand,
+  MatchEvent,
+  Unit,
+  Phase,
+  Player,
+  GameSize,
+  GameSizeEnum,
+} from '@helm/shared-types';
 
 /**
  * Simplified in-memory state engine for MVP.
@@ -9,8 +18,39 @@ import { MatchState, MatchCommand, MatchEvent, Unit, Phase, Player } from '@helm
  * version is production-ready, this file will be replaced with an import
  * from @helm/state-engine.
  *
+ * The state it holds IS the shared `MatchState` from @helm/shared-types, so
+ * the rules engine, the event-sourced engine and this stub all agree on shape.
+ *
  * TODO: Replace with @helm/state-engine once PostgreSQL event store is wired up
  */
+
+/** Phase order for one player turn. `pre_game` is only ever the starting phase. */
+const TURN_PHASES: Phase[] = ['command', 'movement', 'shooting', 'charge', 'fight', 'morale'];
+
+export interface CreateMatchOptions {
+  gameSize?: unknown;
+  mission?: unknown;
+}
+
+function emptyPlayer(id: string): Player {
+  return {
+    id,
+    name: `Player ${id.slice(0, 8)}`,
+    faction: 'unknown',
+    cp: 5,
+    vp: 0,
+    army: {
+      id: uuidv4(),
+      playerId: id,
+      faction: 'unknown',
+      detachment: '',
+      units: [],
+      enhancements: [],
+      totalPoints: 0,
+    },
+  };
+}
+
 export class StateEngine {
   private matches: Map<string, MatchState> = new Map();
   private eventLogs: Map<string, MatchEvent[]> = new Map();
@@ -18,36 +58,26 @@ export class StateEngine {
   /**
    * Create a new match
    */
-  createMatch(player1Id: string, player2Id: string): MatchState {
+  createMatch(player1Id: string, player2Id: string, options: CreateMatchOptions = {}): MatchState {
     const matchId = uuidv4();
+    const now = new Date().toISOString();
+    const parsedSize = GameSizeEnum.safeParse(options.gameSize);
+    const gameSize: GameSize = parsedSize.success ? parsedSize.data : 'strike_force';
 
     const initialState: MatchState = {
       id: matchId,
-      status: 'setup',
-      currentPhase: 'movement',
-      currentRound: 1,
-      players: [
-        {
-          id: player1Id,
-          name: `Player ${player1Id.slice(0, 8)}`,
-          commandPoints: 5,
-          stratagems: [],
-          armyPoints: 0,
-          score: 0,
-        },
-        {
-          id: player2Id,
-          name: `Player ${player2Id.slice(0, 8)}`,
-          commandPoints: 5,
-          stratagems: [],
-          armyPoints: 0,
-          score: 0,
-        },
-      ],
-      units: [],
+      round: 1,
+      phase: 'pre_game',
+      activePlayerId: player1Id,
+      players: [emptyPlayer(player1Id), emptyPlayer(player2Id)],
       terrain: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      objectives: [],
+      turnLog: [],
+      createdAt: now,
+      updatedAt: now,
+      gameSize,
+      mission: typeof options.mission === 'string' ? options.mission : '',
+      isActive: true,
     };
 
     this.matches.set(matchId, initialState);
@@ -65,25 +95,23 @@ export class StateEngine {
   }
 
   /**
-   * Submit an army for a player
+   * Submit an army for a player. Units carry no points in the shared schema
+   * (points live on UnitProfile.pointsCosts), so the caller supplies the total.
    */
-  submitArmy(matchId: string, playerId: string, units: Unit[]): MatchState | null {
+  submitArmy(matchId: string, playerId: string, units: Unit[], totalPoints?: number): MatchState | null {
     const match = this.matches.get(matchId);
     if (!match) return null;
 
-    // Calculate total points
-    const totalPoints = units.reduce((sum, unit) => sum + (unit.points || 0), 0);
-
-    // Add units to the match (without duplicating if already present)
-    const newUnits = units.filter(
-      (u) => !match.units.some((existing) => existing.id === u.id)
-    );
-    match.units.push(...newUnits);
-
-    // Update player army points
     const player = match.players.find((p) => p.id === playerId);
-    if (player) {
-      player.armyPoints = totalPoints;
+    if (!player) return null;
+
+    // Add units to the player's army (without duplicating if already present)
+    const newUnits = units.filter(
+      (u) => !player.army.units.some((existing) => existing.id === u.id)
+    );
+    player.army.units.push(...newUnits);
+    if (typeof totalPoints === 'number') {
+      player.army.totalPoints = totalPoints;
     }
 
     // Record event
@@ -91,7 +119,7 @@ export class StateEngine {
       type: 'army_submitted',
       playerId,
       unitCount: units.length,
-      totalPoints,
+      totalPoints: player.army.totalPoints,
     });
 
     match.updatedAt = new Date().toISOString();
@@ -131,28 +159,31 @@ export class StateEngine {
   }
 
   /**
-   * Advance to the next phase
+   * Advance to the next phase. From `pre_game` the first real phase is
+   * `command`; after `morale` the round advances and the active player swaps.
    */
   advancePhase(matchId: string): MatchState | null {
     const match = this.matches.get(matchId);
     if (!match) return null;
 
-    const phases: Phase[] = ['movement', 'psychic', 'shooting', 'charge', 'fight', 'morale'];
-    const currentIndex = phases.indexOf(match.currentPhase);
-    const nextIndex = (currentIndex + 1) % phases.length;
+    const currentIndex = TURN_PHASES.indexOf(match.phase);
+    const nextIndex = (currentIndex + 1) % TURN_PHASES.length; // pre_game (-1) -> 0
 
-    // If we wrap around, advance the round
-    if (nextIndex === 0) {
-      match.currentRound += 1;
+    // If we wrap around, advance the round and hand the turn to the other player
+    if (currentIndex === TURN_PHASES.length - 1) {
+      match.round += 1;
+      const next = match.players.find((p) => p.id !== match.activePlayerId);
+      if (next) match.activePlayerId = next.id;
     }
 
-    match.currentPhase = phases[nextIndex];
+    match.phase = TURN_PHASES[nextIndex];
     match.updatedAt = new Date().toISOString();
 
     this.recordEvent(matchId, {
       type: 'phase_advanced',
-      newPhase: match.currentPhase,
-      round: match.currentRound,
+      newPhase: match.phase,
+      round: match.round,
+      activePlayerId: match.activePlayerId,
     });
 
     return match;
@@ -174,6 +205,8 @@ export class StateEngine {
       id: uuidv4(),
       matchId,
       timestamp: new Date().toISOString(),
+      sequence: events.length + 1,
+      playerId: 'system',
       ...eventData,
     };
     events.push(event);

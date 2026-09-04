@@ -74,17 +74,18 @@ async function main() {
 
         // Handle subscription to match updates
         if (message.type === 'Subscribe') {
-          currentMatchId = message.matchId;
+          const matchId = String(message.matchId);
+          currentMatchId = matchId;
 
           // Add to match connections
-          if (!matchConnections.has(currentMatchId)) {
-            matchConnections.set(currentMatchId, new Set());
+          if (!matchConnections.has(matchId)) {
+            matchConnections.set(matchId, new Set());
           }
-          matchConnections.get(currentMatchId)!.add(ws);
+          matchConnections.get(matchId)!.add(ws);
 
           // Send current state to client
           try {
-            const state = await stateManager.getState(currentMatchId);
+            const state = await stateManager.getState(matchId);
             ws.send(
               JSON.stringify({
                 type: 'StateUpdate',

@@ -75,7 +75,7 @@ app.post('/api/transcribe', (req: Request, res: Response) => {
     res.json({
       intent: {
         ...intent,
-        requiresConfirmation,
+        requiresConfirmation: confirmationRequired,
         confirmationPrompt,
       },
       confidence: intent.confidence,

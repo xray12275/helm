@@ -15,14 +15,14 @@ export function createRoutes(stateEngine: StateEngine, rulesEngine: RulesEngine)
    */
   router.post('/matches', (req: AppRequest, res) => {
     try {
-      const { player1Id, player2Id } = req.body;
+      const { player1Id, player2Id, gameSize, mission } = req.body;
 
       if (!player1Id || !player2Id) {
         res.status(400).json({ error: 'player1Id and player2Id are required' });
         return;
       }
 
-      const match = stateEngine.createMatch(player1Id, player2Id);
+      const match = stateEngine.createMatch(player1Id, player2Id, { gameSize, mission });
       res.status(201).json(match);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -61,7 +61,7 @@ export function createRoutes(stateEngine: StateEngine, rulesEngine: RulesEngine)
         return;
       }
 
-      const updated = stateEngine.submitArmy(req.params.id, playerId, units);
+      const updated = stateEngine.submitArmy(req.params.id, playerId, units, typeof req.body.totalPoints === 'number' ? req.body.totalPoints : undefined);
       if (!updated) {
         res.status(404).json({ error: 'Match not found' });
         return;

@@ -126,7 +126,7 @@ export function buildRuleContext(
   const context: RuleContext = {
     state,
     command,
-    activePhase: state.currentPhase,
+    activePhase: state.phase,
     additionalFields: {},
   };
 
@@ -156,10 +156,12 @@ export function buildRuleContext(
 
   // Extract player CP
   if (state.players && state.players.length > 0) {
-    const actingPlayer = state.players[0]; // Assume first player is acting
-    context.playerCP = actingPlayer.commandPoints || 0;
-    if (state.players.length > 1) {
-      context.enemyCP = state.players[1].commandPoints || 0;
+    const actingPlayer =
+      state.players.find((p) => p.id === state.activePlayerId) ?? state.players[0];
+    const enemyPlayer = state.players.find((p) => p.id !== actingPlayer.id);
+    context.playerCP = actingPlayer.cp || 0;
+    if (enemyPlayer) {
+      context.enemyCP = enemyPlayer.cp || 0;
     }
   }
 
@@ -170,8 +172,12 @@ export function buildRuleContext(
  * Finds a unit in the state by its ID.
  */
 function findUnitById(state: MatchState, unitId: string): any {
-  if (!state.units) return undefined;
-  return state.units.find((u: any) => u.id === unitId);
+  // Units live on each player's army in the shared MatchState.
+  for (const player of state.players ?? []) {
+    const unit = player.army?.units?.find((u) => u.id === unitId);
+    if (unit) return unit;
+  }
+  return undefined;
 }
 
 /**

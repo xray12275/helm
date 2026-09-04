@@ -23,7 +23,7 @@ Written for Opus 5 / Fable 5.1 defaults. Thinking is on by default — don't ask
 
 `INDEX.md`, `SERVICES_SUMMARY.md`, `IMPLEMENTATION_CHECKLIST.md` and `ARCHITECTURE.md` were generated in a cloud session (one still cites a `/sessions/.../mnt/...` path) and say "COMPLETE — production-ready". Verified on 2026-09-04:
 
-- **No workspace passes `tsc --noEmit`.** See *Known type errors* below. The services only run because `tsx` strips types without checking them.
+- **Typecheck is green as of 2026-09-04** — `npm run typecheck` runs `tsc --noEmit` in all seven workspaces. Before that commit nothing passed `tsc`; the services only ran because `tsx` strips types without checking them. It is the only automated gate, so keep it green.
 - **There are zero test files.** Every service's `npm test` runs the Node test runner over nothing and reports `fail 0`.
 - **20 default rules load, not "30+".** `GET /api/rules` returns `count: 20`.
 - `docs/` (10 files, ~6,000 lines) is the product spec and a 22-week, 8-engineer MVP plan. Useful for domain vocabulary and the intended event/command model; not a description of what exists.
@@ -57,9 +57,8 @@ npm run dev:vision          # uvicorn on :3003 — needs Python 3.11 + `pip inst
 npm run docker:up           # Everything incl. Postgres + vision; docker:down / docker:reset (drops the pg volume)
 npm run db:init             # psql the schema in scripts/init-db.sql into the local Postgres (docker-compose does this on first boot)
 
-npm run typecheck           # shared-types + state-engine + rules-engine only — currently FAILS (see below)
-cd services/<name> && npx tsc --noEmit     # per-service check; api-gateway also fails on rootDir because it type-checks rules-engine source
-cd apps/web-console && npm run type-check  # fails on a tsconfig project-reference error, not on code
+npm run typecheck           # tsc --noEmit in every workspace (root fans out with --workspaces --if-present). Green as of 2026-09-04.
+npm run typecheck -w services/api-gateway   # …or one workspace
 ```
 
 Smoke test after starting `npm run dev`:
@@ -74,11 +73,11 @@ Node 24 works (README says 20+; Dockerfiles use `node:20-alpine`).
 
 ## Architecture
 
-**Everything a client touches goes through `services/api-gateway`** (Express + `ws`, port 3000). It embeds, in-process, an instance of `@helm/rules-engine` (`services/rules-engine`) and its **own in-memory `StateEngine`** (`services/api-gateway/src/state-engine.ts`: two `Map`s, matches and event logs, lost on restart). REST routes are in `routes.ts` (create match, submit army, execute command with legality check, event log, override, advance phase, rules list/explain); `websocket.ts` handles `subscribe` / `command` / `ping` and broadcasts `state_update` / `command_result` / `event`. This is the whole MVP loop today.
+**Everything a client touches goes through `services/api-gateway`** (Express + `ws`, port 3000). It embeds, in-process, an instance of `@helm/rules-engine` (`services/rules-engine`) and its **own in-memory `StateEngine`** (`services/api-gateway/src/state-engine.ts`: two `Map`s, matches and event logs, lost on restart). REST routes are in `routes.ts` (create match, submit army, execute command with legality check, event log, override, advance phase, rules list/explain); `websocket.ts` handles `subscribe` / `command` / `ping` and broadcasts `state_update` / `command_result` / `event`. `POST /api/matches` requires `player1Id` and `player2Id` (the README's `{name, gameSize}` example gets a 400); `gameSize` and `mission` are optional. This is the whole MVP loop today.
 
 **`services/state-engine` is the intended replacement and nothing runs it.** It is the event-sourced version: `EventStore` appends to the Postgres `events` table (`UNIQUE(match_id, sequence)`), `reducer.ts` rebuilds `MatchState` by replay, `command-to-events.ts` turns validated commands into events, and `index.ts` serves its own WebSocket on port 8080. It is not in `npm run dev`, not in `docker-compose.yml`, and the gateway's `state-engine.ts` carries the `TODO: Replace with @helm/state-engine` note. Postgres in docker-compose exists for this future path; the gateway ignores `DATABASE_URL`.
 
-**`packages/shared-types` is the contract** — Zod schemas for events (`events.ts`), entities (`entities.ts`: `MatchState`, `Unit`, `Weapon`, `Phase` enum), commands (`commands.ts`, one discriminated union `MatchCommandSchema`) and results (`results.ts`). Both state engines and the rules engine import from it, and the known type errors are mostly places where a service drifted from these schemas. Change the schema first, then the consumers.
+**`packages/shared-types` is the contract** — Zod schemas for events (`events.ts`), entities (`entities.ts`: `MatchState`, `Unit`, `Weapon`, `Phase` enum), commands (`commands.ts`, one discriminated union `MatchCommandSchema`) and results (`results.ts`). Both state engines and the rules engine import from it. The 2026-09-04 type fixes were mostly consumers that had drifted from these schemas; change the schema first, then the consumers, and keep `LegalityResult`'s audit fields (`id`, `matchId`, `appliedRules`, …) optional because the event-sourced engine does not fill them.
 
 **Rules are data.** `rules-engine/src/default-rules.ts` is a list of `RuleDefinition`s whose conditions are dot-path field checks (`unit.status.hasMoved`) against a context built by `condition-evaluator.ts`; `RulesEngine.checkLegality(state, command)` returns a `LegalityResult` with `ruleId`, `explanation`, `suggestedFix`. An illegal command is blocked before any state mutation and the web console offers an audited override. Adding a rule means adding a definition, not code — unless it needs a new operator.
 
@@ -90,17 +89,16 @@ Node 24 works (README says 20+; Dockerfiles use `node:20-alpine`).
 
 **Web console (`apps/web-console`, Vite + React + Zustand)** renders the battlefield on a canvas (`lib/canvas-renderer.ts`) from `store/match-store.ts`, fed by `hooks/useWebSocket.ts`. **The WebSocket URL is hardcoded** to `ws://localhost:3000/ws` in that hook; the `VITE_WS_URL` / `VITE_API_URL` variables in `docker-compose.yml` are not read.
 
-## Known type errors (2026-09-04)
+## Typecheck notes
 
-Fix these before trusting any typecheck as a regression signal:
+What the 2026-09-04 fix changed, so nobody reverts it by accident:
 
-- `uuid` has no bundled types and `@types/uuid` is installed in no workspace — every service that imports it fails with TS7016.
-- `rules-engine/src/rules-engine.ts:48` reads `state.currentPhase`; `MatchStateSchema` calls it `phase` (`entities.ts:53`). The gateway's in-memory `StateEngine` also uses `currentPhase`, so gateway and rules engine agree with each other and disagree with the shared schema.
-- `rules-engine.ts:79` builds a `LegalityResult` with an `id` field the schema does not have.
-- `voice-service/src/index.ts:78` uses `requiresConfirmation` / `confirmationPrompt` as shorthand properties that are never declared.
-- `state-engine/src/index.ts:80-87` passes `string | null` env values where `string` is required.
-- `api-gateway`'s `tsc` fails with `rootDir` errors because `main: src/index.ts` makes it compile `rules-engine` source; a project reference or `rootDir: ..` is the fix, not reverting `main`.
-- `apps/web-console/tsconfig.json` references `tsconfig.app.json`, which sets `noEmit` — TS6310. `vite build` still succeeds (verified: 57 modules, ~6s) because Vite does not use project references.
+- **No `rootDir` in the service tsconfigs.** Each service compiles `@helm/shared-types` (and the gateway compiles `@helm/rules-engine`) from source through `paths`, so an explicit `rootDir: ./src` was a guaranteed TS6059. `tsc` emit is unused anyway — every package's `main` is `src/index.ts` and everything runs under `tsx`.
+- **`AppRequest`'s extra fields are optional.** A handler typed with a required `requestId` is not assignable to Express's `RequestHandler` (TS2769 on every route).
+- **The gateway's in-memory state is the shared `MatchState`** — `phase` not `currentPhase`, `round`, `activePlayerId`, `players[].cp/vp/army.units`. Phase order is `command → movement → shooting → charge → fight → morale` (no `psychic`; it is not in `PhaseEnum`), starting from `pre_game`. `Army.totalPoints` is `nonnegative` so an empty army is valid.
+- **Units carry no points** in the shared schema (they live on `UnitProfile.pointsCosts`), so `POST /api/matches/:id/army` takes an optional `totalPoints`.
+- **`@types/uuid`** is a devDependency of every workspace that imports `uuid`; **`@types/dom-speech-recognition`** gives the console its Web Speech API types (the hand-rolled interfaces in `useVoice.ts` were removed).
+- `apps/web-console/tsconfig.app.json` is no longer referenced; `tsconfig.json` alone drives both `tsc` and Vite.
 
 ## Gotchas
 
