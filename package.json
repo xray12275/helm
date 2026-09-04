@@ -24,7 +24,8 @@
     "docker:down": "docker-compose down",
     "docker:reset": "docker-compose down -v && docker-compose up --build",
     "db:init": "psql postgresql://helm:helm_dev_password@localhost:5432/helm -f scripts/init-db.sql",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"

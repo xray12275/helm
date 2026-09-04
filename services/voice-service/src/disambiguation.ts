@@ -44,23 +44,27 @@ export class UnitDisambiguator {
 
     const normalized = unitName.toLowerCase().trim();
 
-    // Find exact match first
-    const exactMatch = availableUnits.find(
+    // Exact matches first. Duplicate squads share a name ("Intercessors" A and B),
+    // so a single exact hit resolves and several exact hits fall through to the
+    // clarification prompt instead of silently picking the first.
+    const exactMatches = availableUnits.filter(
       (u) => u.name?.toLowerCase() === normalized ||
              u.id?.toLowerCase() === normalized ||
              u.label?.toLowerCase() === normalized
     );
 
-    if (exactMatch) {
-      return { matched: exactMatch };
+    if (exactMatches.length === 1) {
+      return { matched: exactMatches[0] };
     }
 
-    // Find partial matches
-    const partialMatches = availableUnits.filter((u) =>
-      (u.name?.toLowerCase().includes(normalized) ||
-       u.label?.toLowerCase().includes(normalized) ||
-       u.keywords?.some((k: string) => k.toLowerCase().includes(normalized)))
-    );
+    // Partial matches (only consulted when there was no exact hit)
+    const partialMatches = exactMatches.length > 1
+      ? exactMatches
+      : availableUnits.filter((u) =>
+          (u.name?.toLowerCase().includes(normalized) ||
+           u.label?.toLowerCase().includes(normalized) ||
+           u.keywords?.some((k: string) => k.toLowerCase().includes(normalized)))
+        );
 
     if (partialMatches.length === 0) {
       return {

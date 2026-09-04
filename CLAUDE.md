@@ -24,7 +24,7 @@ Written for Opus 5 / Fable 5.1 defaults. Thinking is on by default — don't ask
 `INDEX.md`, `SERVICES_SUMMARY.md`, `IMPLEMENTATION_CHECKLIST.md` and `ARCHITECTURE.md` were generated in a cloud session (one still cites a `/sessions/.../mnt/...` path) and say "COMPLETE — production-ready". Verified on 2026-09-04:
 
 - **Typecheck is green as of 2026-09-04** — `npm run typecheck` runs `tsc --noEmit` in all seven workspaces. Before that commit nothing passed `tsc`; the services only ran because `tsx` strips types without checking them. It is the only automated gate, so keep it green.
-- **There are zero test files.** Every service's `npm test` runs the Node test runner over nothing and reports `fail 0`.
+- **Tests exist since 2026-09-04** — 68 of them across six workspaces, `npm test` at the root. Before that every service's `npm test` ran the Node test runner over nothing and reported `fail 0`. See *Testing* below; the web console still has none.
 - **20 default rules load, not "30+".** `GET /api/rules` returns `count: 20`.
 - `docs/` (10 files, ~6,000 lines) is the product spec and a 22-week, 8-engineer MVP plan. Useful for domain vocabulary and the intended event/command model; not a description of what exists.
 
@@ -58,7 +58,10 @@ npm run docker:up           # Everything incl. Postgres + vision; docker:down / 
 npm run db:init             # psql the schema in scripts/init-db.sql into the local Postgres (docker-compose does this on first boot)
 
 npm run typecheck           # tsc --noEmit in every workspace (root fans out with --workspaces --if-present). Green as of 2026-09-04.
-npm run typecheck -w services/api-gateway   # …or one workspace
+npm test                    # node:test via tsx in every workspace that has tests (6 of 7). 68 tests, ~2s.
+npm test -w services/rules-engine           # …or one workspace
+npx tsx --test src/dice-engine.test.ts      # …or one file (run inside that workspace)
+npx tsx --test --test-name-pattern="tamper" src/dice-engine.test.ts   # …or one test by name
 ```
 
 Smoke test after starting `npm run dev`:
@@ -88,6 +91,23 @@ Node 24 works (README says 20+; Dockerfiles use `node:20-alpine`).
 **Vision (`services/vision-service`, FastAPI)** exposes `/api/detect`, `/api/fingerprint`, `/api/identify`, `/api/calibrate`, `/api/terrain`, `/api/health`. `pipeline.py` holds the five components as classes with placeholder logic — there is no trained model in the repo (`VISION_MODEL_PATH` in `.env.example` points at a file that does not exist).
 
 **Web console (`apps/web-console`, Vite + React + Zustand)** renders the battlefield on a canvas (`lib/canvas-renderer.ts`) from `store/match-store.ts`, fed by `hooks/useWebSocket.ts`. **The WebSocket URL is hardcoded** to `ws://localhost:3000/ws` in that hook; the `VITE_WS_URL` / `VITE_API_URL` variables in `docker-compose.yml` are not read.
+
+## Testing
+
+Plain `node:test` + `node:assert/strict`, run through `tsx` so TypeScript needs no build step. Test files sit **next to the code as `src/*.test.ts`** and are included by each workspace's tsconfig, so `npm run typecheck` checks them too — a test that does not compile fails the gate before it runs. No vitest, no jest; don't add one.
+
+| Workspace | File | What it pins down |
+|---|---|---|
+| shared-types | `schemas.test.ts` | `PhaseEnum` has no `psychic`; `MatchCommandSchema` discriminates on `type`; `LegalityResult` audit fields optional; `Army.totalPoints` may be 0 |
+| rules-engine | `rules-engine.test.ts` | rule loading, phase filtering, blocking vs permissive rules, every `evaluateCondition` operator, `buildRuleContext` reading the shared shape, and a **characterization test** of which default-rule fields resolve |
+| api-gateway | `state-engine.test.ts`, `routes.test.ts` | the in-memory engine's output parses with `MatchStateSchema`; phase cycle and round/active-player swap; the REST surface end to end on a throwaway server |
+| state-engine | `reducer.test.ts` | `reduceEvent` purity and turn-reset on `PhaseAdvanced`, `commandToEvents` phase/round arithmetic |
+| dice-service | `dice-engine.test.ts` | range, total, verify accepts genuine and rejects tampered rolls, fresh seed per roll |
+| voice-service | `intent-parser.test.ts` | every intent matcher plus the disambiguator |
+
+**The characterization test is the important one.** `default-rules.ts` was written against a `MatchState` shape that does not exist: of the 15 condition fields it uses, only `distance`, `playerCP` and `unit.status.hasMoved` resolve against a real shared `MatchState`. The other 12 (`unit.status.inEngagement` vs schema `isInEngagement`, `unit.lastActionType`, `army.totalPoints` at the state root, …) never match, so those rules can never block anything. The test asserts that exact list; when you fix a rule to use a real path, move it out of `UNRESOLVED` there. Until then the referee only enforces distance- and CP-based rules.
+
+Fixed while writing the tests: `UnitDisambiguator` returned the *first* unit whose name matched exactly, so two squads named "Intercessors" (labels A/B, the product's core duplicate case) could never trigger the "Which Intercessors?" prompt. Several exact matches are now ambiguous.
 
 ## Typecheck notes
 
