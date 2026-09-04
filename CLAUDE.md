@@ -124,5 +124,4 @@ What the 2026-09-04 fix changed, so nobody reverts it by accident:
 
 - Match state lives in gateway memory. Restarting `dev:api` deletes every match; the web console will show a stale match id until you create a new one.
 - `docker-compose.yml` mounts each service's `src/` into its container, so edits hot-reload under Docker too — but the Dockerfiles `npm install` only the workspaces they name; adding a new `@helm/*` dependency to a service means updating its Dockerfile's `--workspace` list.
-- `npm run typecheck` at the root only covers three workspaces; the gateway, dice, voice and console each have to be checked in their own directory.
 - `apps/web-console/QUICKSTART.md` says `cd web-console && npm install` — that path is pre-monorepo; install from the root.
