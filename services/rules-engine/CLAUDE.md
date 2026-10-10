@@ -1,0 +1,3 @@
+# rules-engine
+
+**The characterization test in `rules-engine.test.ts` is the important one.** `default-rules.ts` was written against a `MatchState` shape that does not exist: of the 15 condition fields it uses, only `distance`, `playerCP` and `unit.status.hasMoved` resolve against a real shared `MatchState`. The other 12 (`unit.status.inEngagement` vs schema `isInEngagement`, `unit.lastActionType`, `army.totalPoints` at the state root, …) never match, so those rules can never block anything. The test asserts that exact list; when you fix a rule to use a real path, move it out of `UNRESOLVED` there. Until then the referee only enforces distance- and CP-based rules.
